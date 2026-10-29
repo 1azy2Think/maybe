@@ -1,0 +1,55 @@
+# Daily logical backup of the production Neon database, kept as a workflow artifact.
+#
+# Requires the NEON_DATABASE_URL_UNPOOLED secret: the direct (non-pooler) Neon
+# connection string, e.g. postgresql://user:pass@ep-xxx.region.aws.neon.tech/db?sslmode=require
+#
+# To restore, download the artifact from the run and:
+#   pg_restore --clean --if-exists --no-owner --no-acl -d "<target url>" maybe-YYYYMMDD-HHMMSS.dump
+# Prefer restoring into a fresh Neon branch first, verify it, then point the app at it.
+
+name: DB backup
+
+on:
+  schedule:
+    - cron: "0 18 * * *" # 02:00 MYT
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PG_VERSION: 17 # must be >= the Neon server's major version
+    steps:
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y "postgresql-client-${PG_VERSION}"
+
+      - name: Dump database
+        env:
+          DATABASE_URL: ${{ secrets.NEON_DATABASE_URL_UNPOOLED }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::NEON_DATABASE_URL_UNPOOLED secret is not set"
+            exit 1
+          fi
+          file="maybe-$(date -u +%Y%m%d-%H%M%S).dump"
+          "/usr/lib/postgresql/${PG_VERSION}/bin/pg_dump" "$DATABASE_URL" \
+            --format=custom --no-owner --no-acl --file="$file"
+          ls -lh "$file"
+          echo "BACKUP_FILE=$file" >> "$GITHUB_ENV"
+
+      - name: Upload backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BACKUP_FILE }}
+          path: ${{ env.BACKUP_FILE }}
+          retention-days: 30
+          compression-level: 0
+          if-no-files-found: error
