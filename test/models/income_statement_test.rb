@@ -48,6 +48,20 @@ class IncomeStatementTest < ActiveSupport::TestCase
     assert_equal expected_total_income, income_totals.category_totals.find { |ct| ct.category.id == @income_category.id }.total
   end
 
+  test "nets reimbursements against their expense category" do
+    create_transaction(account: @checking_account, amount: -150, category: @groceries_category)
+
+    income_statement = IncomeStatement.new(@family)
+    expense_totals = income_statement.expense_totals(period: Period.last_30_days)
+    income_totals = income_statement.income_totals(period: Period.last_30_days)
+
+    assert_equal 900 - 150, expense_totals.total
+    assert_equal 900 - 150, expense_totals.category_totals.find { |ct| ct.category.id == @groceries_category.id }.total
+    assert_equal 1000, income_totals.total
+    assert_equal 750.0, income_statement.median_expense(interval: "month")
+    assert_equal 750.0, income_statement.median_expense(interval: "month", category: @groceries_category)
+  end
+
   test "calculates median expense" do
     income_statement = IncomeStatement.new(@family)
     assert_equal 200 + 300 + 400, income_statement.expense_totals(period: Period.last_30_days).total

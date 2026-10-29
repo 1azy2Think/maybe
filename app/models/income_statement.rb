@@ -3,6 +3,10 @@ class IncomeStatement
 
   monetize :median_expense, :median_income
 
+  # Categorized transactions follow their category's classification; uncategorized
+  # ones fall back to the sign of the amount. Expects `c` (categories) and `ae` (entries).
+  CLASSIFICATION_SQL = "COALESCE(c.classification, CASE WHEN ae.amount < 0 THEN 'income' ELSE 'expense' END)".freeze
+
   attr_reader :family
 
   def initialize(family)

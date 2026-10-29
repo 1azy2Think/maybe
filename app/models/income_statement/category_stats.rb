@@ -35,7 +35,7 @@ class IncomeStatement::CategoryStats
           SELECT
             c.id as category_id,
             date_trunc(:interval, ae.date) as period,
-            CASE WHEN ae.amount < 0 THEN 'income' ELSE 'expense' END as classification,
+            #{IncomeStatement::CLASSIFICATION_SQL} as classification,
             SUM(ae.amount * COALESCE(er.rate, 1)) as total
           FROM transactions t
           JOIN entries ae ON ae.entryable_id = t.id AND ae.entryable_type = 'Transaction'
@@ -49,7 +49,7 @@ class IncomeStatement::CategoryStats
           WHERE a.family_id = :family_id
             AND t.kind NOT IN ('funds_movement', 'one_time', 'cc_payment')
             AND ae.excluded = false
-          GROUP BY c.id, period, CASE WHEN ae.amount < 0 THEN 'income' ELSE 'expense' END
+          GROUP BY c.id, period, #{IncomeStatement::CLASSIFICATION_SQL}
         )
         SELECT
           category_id,

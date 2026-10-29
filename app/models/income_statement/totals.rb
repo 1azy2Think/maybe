@@ -28,13 +28,19 @@ class IncomeStatement::Totals
 
     # OPTIMIZED: Direct SUM aggregation without unnecessary time bucketing
     # Eliminates CTE and intermediate date grouping for maximum performance
+    #
+    # Categorized transactions take their category's classification, so inflows
+    # (e.g. reimbursements) in an expense category net against its spending.
     def optimized_query_sql
       <<~SQL
         SELECT
           c.id as category_id,
           c.parent_id as parent_category_id,
-          CASE WHEN ae.amount < 0 THEN 'income' ELSE 'expense' END as classification,
-          ABS(SUM(ae.amount * COALESCE(er.rate, 1))) as total,
+          #{IncomeStatement::CLASSIFICATION_SQL} as classification,
+          GREATEST(
+            CASE WHEN #{IncomeStatement::CLASSIFICATION_SQL} = 'income' THEN -1 ELSE 1 END * SUM(ae.amount * COALESCE(er.rate, 1)),
+            0
+          ) as total,
           COUNT(ae.id) as transactions_count
         FROM (#{@transactions_scope.to_sql}) at
         JOIN entries ae ON ae.entryable_id = at.id AND ae.entryable_type = 'Transaction'
@@ -46,7 +52,7 @@ class IncomeStatement::Totals
         )
         WHERE at.kind NOT IN ('funds_movement', 'one_time', 'cc_payment')
           AND ae.excluded = false
-        GROUP BY c.id, c.parent_id, CASE WHEN ae.amount < 0 THEN 'income' ELSE 'expense' END;
+        GROUP BY c.id, c.parent_id, #{IncomeStatement::CLASSIFICATION_SQL};
       SQL
     end
 
