@@ -145,6 +145,8 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :recurring_transactions, except: :show
+
   resources :rules, except: :show do
     member do
       get :confirm
@@ -258,6 +260,7 @@ Rails.application.routes.draw do
   end
 
   get "cron/daily", to: "cron#daily"
+  get "cron/recurring", to: "cron#recurring"
 
   get "redis-configuration-error", to: "pages#redis_configuration_error"
 

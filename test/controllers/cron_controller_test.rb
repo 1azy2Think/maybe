@@ -22,4 +22,24 @@ class CronControllerTest < ActionDispatch::IntegrationTest
       assert_response :ok
     end
   end
+
+  test "enqueues recurring transactions job with a valid cron secret" do
+    with_env_overrides CRON_SECRET: "secret" do
+      RecurringTransactionsJob.expects(:perform_later).once
+
+      get cron_recurring_url, headers: { "Authorization" => "Bearer secret" }
+
+      assert_response :ok
+    end
+  end
+
+  test "rejects recurring requests without the cron secret" do
+    with_env_overrides CRON_SECRET: "secret" do
+      RecurringTransactionsJob.expects(:perform_later).never
+
+      get cron_recurring_url
+
+      assert_response :unauthorized
+    end
+  end
 end

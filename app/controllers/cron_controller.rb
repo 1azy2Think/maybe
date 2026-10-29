@@ -13,6 +13,12 @@ class CronController < ApplicationController
     head :ok
   end
 
+  def recurring
+    RecurringTransactionsJob.perform_later
+
+    head :ok
+  end
+
   private
     def verify_cron_secret
       secret = ENV["CRON_SECRET"]

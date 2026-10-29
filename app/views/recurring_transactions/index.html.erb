@@ -1,0 +1,41 @@
+<header class="flex items-center justify-between">
+  <h1 class="text-primary text-xl font-medium">Recurring</h1>
+  <%= render DS::Link.new(
+    text: "New recurring",
+    variant: "primary",
+    href: new_recurring_transaction_path,
+    icon: "plus",
+    frame: :modal
+  ) %>
+</header>
+
+<div class="bg-container rounded-xl shadow-border-xs p-4">
+  <% if @recurring_transactions.any? %>
+    <div class="bg-container-inset rounded-xl">
+      <div class="flex items-center gap-1.5 px-4 py-2 text-xs uppercase font-medium text-secondary">
+        <p>Recurring</p>
+        <span class="text-subdued">&middot;</span>
+        <p><%= @recurring_transactions.size %></p>
+      </div>
+      <div class="p-1">
+        <div class="flex flex-col bg-container rounded-lg shadow-border-xs">
+          <%= render partial: "recurring_transaction", collection: @recurring_transactions, spacer_template: "shared/ruler" %>
+        </div>
+      </div>
+    </div>
+  <% else %>
+    <div class="flex justify-center items-center py-20">
+      <div class="text-center flex flex-col items-center max-w-[500px]">
+        <p class="text-sm text-primary font-medium mb-1">No recurring transactions yet</p>
+        <p class="text-sm text-secondary mb-4">Set up subscriptions, bills, loan payments or regular transfers once, and they will be posted automatically on their due dates.</p>
+        <%= render DS::Link.new(
+          text: "New recurring",
+          variant: "primary",
+          href: new_recurring_transaction_path,
+          icon: "plus",
+          frame: :modal
+        ) %>
+      </div>
+    </div>
+  <% end %>
+</div>

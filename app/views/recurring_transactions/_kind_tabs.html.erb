@@ -1,0 +1,12 @@
+<%# locals: (active_kind:) %>
+
+<fieldset class="bg-surface-inset rounded-lg p-1 grid grid-flow-col justify-stretch gap-x-2">
+  <% [ [ "expense", "Expense", "minus-circle" ], [ "income", "Income", "plus-circle" ], [ "transfer", "Transfer", "arrow-right-left" ] ].each do |kind, label, icon_name| %>
+    <%= link_to new_recurring_transaction_path(kind: kind),
+                data: { turbo_frame: :modal },
+                class: "flex px-4 py-1 rounded-lg items-center space-x-2 justify-center text-sm #{active_kind == kind ? 'bg-container text-primary shadow-sm' : 'hover:bg-container text-subdued hover:text-primary hover:shadow-sm'}" do %>
+      <%= icon icon_name %>
+      <%= tag.span label %>
+    <% end %>
+  <% end %>
+</fieldset>

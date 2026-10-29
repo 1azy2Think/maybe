@@ -18,3 +18,9 @@ run_security_health_checks:
   class: "SecurityHealthCheckJob"
   queue: "scheduled"
   description: "Runs security health checks to detect issues with security data"
+
+post_recurring_transactions:
+  cron: "0 1 * * *" # every day at 1:00 AM UTC
+  class: "RecurringTransactionsJob"
+  queue: "scheduled"
+  description: "Posts recurring transactions and transfers that have come due"

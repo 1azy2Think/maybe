@@ -1,0 +1,51 @@
+<%# locals: (recurring_transaction:) %>
+
+<div id="<%= dom_id(recurring_transaction) %>" class="flex justify-between items-center gap-4 p-4 <%= recurring_transaction.active? ? "text-primary" : "text-secondary" %>">
+  <div class="flex items-center gap-3 min-w-0">
+    <%= icon({ "expense" => "minus-circle", "income" => "plus-circle", "transfer" => "arrow-right-left" }[recurring_transaction.kind]) %>
+
+    <div class="text-sm min-w-0">
+      <p class="font-medium truncate"><%= recurring_transaction.display_name %></p>
+      <p class="text-secondary truncate">
+        <%= recurring_transaction.frequency.humanize %>
+        &middot;
+        <%= recurring_transaction.transfer? ? "From #{recurring_transaction.account.name}" : recurring_transaction.account.name %>
+        <% if recurring_transaction.category %>
+          &middot; <%= recurring_transaction.category.name %>
+        <% end %>
+      </p>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-4 shrink-0">
+    <div class="text-sm text-right">
+      <p class="font-medium <%= "text-success" if recurring_transaction.income? %>">
+        <%= { "expense" => "-", "income" => "+" }[recurring_transaction.kind] %><%= format_money recurring_transaction.amount_money %>
+      </p>
+      <p class="text-secondary">
+        <% if recurring_transaction.active? %>
+          Next: <%= recurring_transaction.next_occurrence_date.strftime("%b %-d, %Y") %>
+        <% elsif recurring_transaction.ended? %>
+          Ended
+        <% else %>
+          Paused
+        <% end %>
+      </p>
+    </div>
+
+    <%= styled_form_with model: recurring_transaction, namespace: "recurring_transaction_#{recurring_transaction.id}", data: { controller: "auto-submit-form" } do |f| %>
+      <%= f.toggle :active, { data: { auto_submit_form_target: "auto" } } %>
+    <% end %>
+
+    <%= render DS::Menu.new do |menu| %>
+      <% menu.with_item(variant: "link", text: "Edit", href: edit_recurring_transaction_path(recurring_transaction), icon: "pencil", data: { turbo_frame: "modal" }) %>
+      <% menu.with_item(
+        variant: "button",
+        text: "Delete",
+        href: recurring_transaction_path(recurring_transaction),
+        icon: "trash-2",
+        method: :delete,
+        confirm: CustomConfirm.for_resource_deletion("recurring #{recurring_transaction.kind}")) %>
+    <% end %>
+  </div>
+</div>

@@ -1,6 +1,7 @@
 {
   "framework": "container",
   "crons": [
-    { "path": "/cron/daily", "schedule": "0 22 * * 1-5" }
+    { "path": "/cron/daily", "schedule": "0 22 * * 1-5" },
+    { "path": "/cron/recurring", "schedule": "0 1 * * *" }
   ]
 }
