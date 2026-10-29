@@ -2,7 +2,14 @@
 
 # If running the rails server then create or migrate existing database
 if [ "${1}" == "./bin/rails" ] && [ "${2}" == "server" ]; then
-  ./bin/rails db:prepare
+  (
+    # Migrate over a direct connection with advisory locks when the runtime
+    # connection goes through a transaction-mode pooler (e.g. Neon)
+    if [ -n "${DATABASE_URL_UNPOOLED}" ]; then
+      export DATABASE_URL="${DATABASE_URL_UNPOOLED}" DB_ADVISORY_LOCKS=true DB_PREPARED_STATEMENTS=true
+    fi
+    ./bin/rails db:prepare
+  )
 fi
 
 exec "${@}"
