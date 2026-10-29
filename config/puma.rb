@@ -49,6 +49,25 @@ plugin :tmp_restart
 
 pidfile ENV["PIDFILE"] if ENV["PIDFILE"]
 
+# Runs Sidekiq inside the Puma process for single-container hosts (e.g. Vercel)
+# that can't run a separate always-on worker. Make sure the DB pool (DB_POOL)
+# covers Puma threads + Sidekiq concurrency.
+if ENV["EMBED_SIDEKIQ"] == "true"
+  embedded_sidekiq = nil
+
+  on_booted do
+    embedded_sidekiq = Sidekiq.configure_embed do |config|
+      config.queues = %w[scheduled high_priority medium_priority low_priority default]
+      config.concurrency = Integer(ENV.fetch("SIDEKIQ_CONCURRENCY") { 2 })
+    end
+    embedded_sidekiq.run
+  end
+
+  on_stopped do
+    embedded_sidekiq&.stop
+  end
+end
+
 if rails_env == "development"
   # Specifies a very generous `worker_timeout` so that the worker
   # isn't killed by Puma when suspended by a debugger.

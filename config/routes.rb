@@ -257,6 +257,8 @@ Rails.application.routes.draw do
     post "stripe"
   end
 
+  get "cron/daily", to: "cron#daily"
+
   get "redis-configuration-error", to: "pages#redis_configuration_error"
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

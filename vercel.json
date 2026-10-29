@@ -1,0 +1,6 @@
+{
+  "framework": "container",
+  "crons": [
+    { "path": "/cron/daily", "schedule": "0 22 * * 1-5" }
+  ]
+}
